@@ -14,10 +14,6 @@ Generate high-quality images using flow matching, a recent approach in generativ
 - [Quick Start](#quick-start)
 - [Project Structure](#project-structure)
 - [Training](#training)
-- [Sampling & Inference](#sampling--inference)
-- [Architecture](#architecture)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## What the Project Does
 
@@ -88,11 +84,6 @@ pip install torch torchvision
 pip install tensorflow tqdm matplotlib pillow
 ```
 
-Or install all at once:
-
-```bash
-pip install torch torchvision tensorflow>=2.0.0 tqdm matplotlib pillow
-```
 
 4. **Verify installation:**
 
@@ -193,13 +184,6 @@ The MNIST training script trains the model to generate 128×128 grayscale digits
 python mnist_train.py
 ```
 
-**Key parameters:**
-- **Epochs**: 20
-- **Batch size**: 64
-- **Learning rate**: 1e-4
-- **Image size**: 128×128 (single channel)
-- **Time steps**: Linear sampling between noise (t=1) and data (t=0)
-
 **Output:**
 - `flow_matching_mnist.pth`: Trained model checkpoint
 - Per-epoch loss printed to console
@@ -212,123 +196,3 @@ Train on facial images from CelebA dataset:
 python rectified_flow_train.py
 ```
 
-**Key parameters:**
-- **Epochs**: 1000 (configurable)
-- **Batch size**: 64 (adjust for GPU memory)
-- **Learning rate**: 1e-5 (Adam optimizer with weight decay)
-- **Image size**: 128×128 (3-channel RGB)
-- **EMA decay**: 0.999
-
-**Checkpointing:**
-- `checkpoints/epoch_N.pth`: Each epoch's checkpoint
-- `checkpoints/rf_best.pth`: Best model (lowest validation loss)
-
-**Output format:**
-```python
-{
-    "epoch": int,
-    "ema_state": dict,          # EMA model weights
-    "model_state": dict,        # Current model weights
-    "optimizer_state": dict,    # Optimizer state
-    "loss": float               # Average loss
-}
-```
-
-## Sampling & Inference
-
-### Using RK4 ODE Solver
-
-The ODE solver uses 4th-order Runge-Kutta integration for high-quality samples:
-
-```python
-@torch.no_grad()
-def sample_from_checkpoint(checkpoint_path, steps=2000):
-    # Load model and EMA state
-    model = ConditionalUNet(...)
-    # Start from noise
-    x = torch.randn(batch_size, channels, height, width)
-    # Integrate ODE from t=1 (noise) to t=0 (data)
-    for step in range(steps):
-        x = rk4_step(velocity_fn, x, t, dt)
-    return x
-```
-
-**Number of steps tradeoff:**
-- Fewer steps (~100): Faster, lower quality
-- Medium steps (~500-1000): Good balance
-- More steps (~2000+): Higher quality, slower
-
-### Inference Example
-
-```python
-import torch
-from unet import ConditionalUNet
-from mnist_train import generate_sample
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = ConditionalUNet()
-model.load_state_dict(torch.load("flow_matching_mnist.pth"))
-model = model.to(device).eval()
-
-# Generate sample
-with torch.no_grad():
-    sample = generate_sample(model, img_size=(1, 128, 128), steps=100)
-    
-# Visualize
-import matplotlib.pyplot as plt
-plt.imshow(sample[0, 0].cpu().numpy(), cmap='gray')
-plt.show()
-```
-
-## Architecture
-
-### Conditional U-Net
-
-The core architecture combines:
-
-1. **Time Embedding**: Sinusoidal positional encoding → MLP
-   - Maps continuous time `t ∈ [0, 1]` to high-dimensional representation
-   
-2. **Encoder**: Progressive spatial downsampling (128 → 64 → 32 → 16)
-   - Residual blocks with time conditioning
-   - Self-attention at lower resolutions
-   
-3. **Bottleneck**: Deepest feature representation with self-attention
-   
-4. **Decoder**: Progressive spatial upsampling (16 → 32 → 64 → 128)
-   - Skip connections from encoder
-   - Residual blocks with time conditioning
-   - Self-attention at lower resolutions
-
-**Key architectural choices:**
-- Group normalization (8 groups) for stable training
-- SiLU activation function
-- Dropout for regularization
-- Skip connections for gradient flow
-
-## Contributing
-
-Contributions welcome! Areas for improvement:
-
-- [ ] Additional dataset support (ImageNet, custom datasets)
-- [ ] Improved sampling strategies (DDIM, Euler, etc.)
-- [ ] Classifier-free guidance for conditional generation
-- [ ] Fine-tuning utilities
-- [ ] Inference optimization (quantization, pruning)
-- [ ] Comprehensive documentation and tutorials
-
-**To contribute:**
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit your changes: `git commit -m "Add your feature"`
-4. Push to the branch: `git push origin feature/your-feature`
-5. Open a Pull Request
-
-## License
-
-This project is open source. Please check the LICENSE file for details.
-
----
-
-**Questions or issues?** Open an issue on the repository or check the code comments for implementation details.
