@@ -17,6 +17,7 @@ Generate high-quality images using flow matching, a recent approach in generativ
   <img src="images/img2.png" width="150"/>
   <img src="images/img5.png" width="150"/>
   <img src="images/img3.png" width="150"/>
+  <img src="images/img4.png" width="150"/>
 </p>
 
 
