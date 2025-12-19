@@ -4,6 +4,25 @@
 
 Generate high-quality images using flow matching, a recent approach in generative modeling that learns to map between noise and data distributions through learned velocity fields.
 
+<p>
+  <img src="images/0.png" width="150"/>
+  <img src="images/2.png" width="150"/>
+  <img src="images/3.png" width="150"/>
+  <img src="images/4.png" width="150"/>
+  <img src="images/6.png" width="150"/>
+  <img src="images/8.png" width="150"/>
+</p>
+
+<p>
+  <img src="images/img1.png" width="150"/>
+  <img src="images/img2.png" width="150"/>
+  <img src="images/img5.png" width="150"/>
+  <img src="images/img4.png" width="150"/>
+  <img src="images/img3.png" width="150"/>
+</p>
+
+
+
 ## Table of Contents
 
 - [What the Project Does](#what-the-project-does)
